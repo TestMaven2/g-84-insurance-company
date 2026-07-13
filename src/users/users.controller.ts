@@ -12,7 +12,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { User } from './user.entity';
-import { Role } from './enum/role.enum';
+import { Role } from './enums/role.enum';
 
 // localhost:3000/users
 @Controller('users')
