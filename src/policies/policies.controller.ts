@@ -7,40 +7,51 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { Policy } from './policy.entity';
-import { InsuranceType } from './enums/insurance-type.enum';
+import { PoliciesService } from './policies.service';
 
 @Controller('policies')
 export class PoliciesController {
+  constructor(private readonly service: PoliciesService) {}
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() policy: Policy): Policy {
-    console.log('Saved policy:', policy);
-    return policy;
+  async create(@Body() policy: Policy): Promise<Policy> {
+    return await this.service.create(policy);
   }
 
   @Get()
-  getAll(): Policy[] {
-    const policy1: Policy = new Policy();
-    policy1.type = InsuranceType.CASCO;
-    const policy2: Policy = new Policy();
-    policy2.type = InsuranceType.LIABILITY;
-    return [policy1, policy2];
+  async getAll(): Promise<Policy[]> {
+    return await this.service.getAllActivePolicies();
   }
 
   @Get(':id')
-  getById(@Param('id', ParseIntPipe) id: number): Policy {
-    console.log('Id:', id);
-    const policy: Policy = new Policy();
-    policy.type = InsuranceType.CASCO;
-    return policy;
+  async getById(@Param('id', ParseIntPipe) id: number): Promise<Policy | null> {
+    return await this.service.getActivePolicyById(id);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteById(@Param('id', ParseIntPipe) id: number): void {
-    console.log('Deleted id:', id);
+  async deleteById(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.service.deleteById(id);
+  }
+
+  @Patch(':id/restore')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async restoreById(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.service.restoreById(id);
+  }
+
+  @Put(':policyId/add-car/:carId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async addCar(
+    @Param('policyId', ParseIntPipe) policyId: number,
+    @Param('carId', ParseIntPipe) carId: number,
+  ): Promise<void> {
+    await this.service.addActiveCarToActivePolicy(policyId, carId);
   }
 }
