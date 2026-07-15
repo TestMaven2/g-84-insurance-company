@@ -10,54 +10,69 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Car } from './car.entity';
+import { CarsService } from './cars.service';
+import { ApiOkResponse } from '@nestjs/swagger';
+import { CarDto } from './dto/car.dto';
+import { CarSaveDto } from './dto/car.save-dto';
+import { CarUpdateDto } from './dto/car.update-dto';
 
 @Controller('cars')
 export class CarsController {
+  constructor(private readonly service: CarsService) {}
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() car: Car): Car {
-    console.log('Saved car:', car);
-    return car;
+  @ApiOkResponse({
+    type: CarDto,
+  })
+  async create(@Body() saveDto: CarSaveDto): Promise<CarDto> {
+    return await this.service.create(saveDto);
   }
 
   @Get()
-  getAll(): Car[] {
-    const car1: Car = new Car();
-    car1.brand = 'Toyota';
-    const car2: Car = new Car();
-    car2.brand = 'Nissan';
-    return [car1, car2];
+  @ApiOkResponse({
+    type: CarDto,
+    isArray: true,
+  })
+  async getAll(): Promise<CarDto[]> {
+    return await this.service.getAllActiveCars();
   }
 
   @Get(':id')
-  getById(@Param('id', ParseIntPipe) id: number): Car {
-    console.log('Id:', id);
-    const car: Car = new Car();
-    car.brand = 'Honda';
-    return car;
+  @ApiOkResponse({
+    type: CarDto,
+  })
+  async getById(@Param('id', ParseIntPipe) id: number): Promise<CarDto | null> {
+    return await this.service.getActiveCarById(id);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  update(@Param('id', ParseIntPipe) id: number, @Body() car: Car): void {
-    console.log('Id:', id);
-    console.log('New color:', car.color);
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDto: CarUpdateDto,
+  ): Promise<void> {
+    await this.service.update(id, updateDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteById(@Param('id', ParseIntPipe) id: number): void {
-    console.log('Deleted id:', id);
+  async deleteById(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.service.deleteById(id);
+  }
+
+  @Patch(':id/restore')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async restoreById(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.service.restoreById(id);
   }
 
   @Patch(':carId/set-owner/:userId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  setOwner(
+  async setOwner(
     @Param('carId', ParseIntPipe) carId: number,
     @Param('userId', ParseIntPipe) userId: number,
-  ): void {
-    console.log('Car id:', carId);
-    console.log('Owner id:', userId);
+  ): Promise<void> {
+    await this.service.setActiveOwnerToActiveCar(carId, userId);
   }
 }

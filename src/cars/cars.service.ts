@@ -2,24 +2,37 @@ import { Injectable } from '@nestjs/common';
 import { Car } from './car.entity';
 import { CarsRepository } from './cars.repository';
 import { UsersService } from '../users/users.service';
+import { CarsMapper } from './dto/cars.mapper';
+import { CarSaveDto } from './dto/car.save-dto';
+import { CarDto } from './dto/car.dto';
+import { CarUpdateDto } from './dto/car.update-dto';
 
 @Injectable()
 export class CarsService {
   constructor(
     private readonly repository: CarsRepository,
     private readonly userService: UsersService,
+    private readonly mapper: CarsMapper,
   ) {}
 
-  async create(car: Car): Promise<Car> {
-    car.active = true;
-    return await this.repository.save(car);
+  async create(saveDto: CarSaveDto): Promise<CarDto> {
+    const entity: Car = this.mapper.mapDtoToEntity(saveDto);
+    entity.active = true;
+    await this.repository.save(entity);
+    return this.mapper.mapEntityToDto(entity);
   }
 
-  async getAllActiveCars(): Promise<Car[]> {
-    return await this.repository.findAllActive();
+  async getAllActiveCars(): Promise<CarDto[]> {
+    const cars: Car[] = await this.repository.findAllActive();
+    return this.mapper.mapEntityListToDtoList(cars);
   }
 
-  async getActiveCarById(id: number): Promise<Car> {
+  async getActiveCarById(id: number): Promise<CarDto> {
+    const car: Car = await this.getActiveEntityById(id);
+    return this.mapper.mapEntityToDto(car);
+  }
+
+  async getActiveEntityById(id: number): Promise<Car> {
     const car: Car | null = await this.repository.findById(id);
 
     if (!car || !car.active) {
@@ -29,14 +42,14 @@ export class CarsService {
     return car;
   }
 
-  async update(id: number, car: Car): Promise<void> {
-    const foundCar: Car = await this.getActiveCarById(id);
-    foundCar.color = car.color;
+  async update(id: number, updateDto: CarUpdateDto): Promise<void> {
+    const foundCar: Car = await this.getActiveEntityById(id);
+    foundCar.color = updateDto.newColor;
     await this.repository.save(foundCar);
   }
 
   async deleteById(id: number): Promise<void> {
-    const car: Car = await this.getActiveCarById(id);
+    const car: Car = await this.getActiveEntityById(id);
     car.active = false;
     await this.repository.save(car);
   }
@@ -54,8 +67,8 @@ export class CarsService {
     carId: number,
     ownerId: number,
   ): Promise<void> {
-    const car: Car = await this.getActiveCarById(carId);
-    car.owner = await this.userService.getActiveUserById(ownerId);
+    const car: Car = await this.getActiveEntityById(carId);
+    car.owner = await this.userService.getActiveEntityById(ownerId);
     await this.repository.save(car);
   }
 }
