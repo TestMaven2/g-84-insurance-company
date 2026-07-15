@@ -11,8 +11,9 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { Policy } from './policy.entity';
 import { PoliciesService } from './policies.service';
+import { PolicySaveDto } from './dto/policy.save-dto';
+import { PolicyDto } from './dto/policy.dto';
 
 @Controller('policies')
 export class PoliciesController {
@@ -20,18 +21,18 @@ export class PoliciesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() policy: Policy): Promise<Policy> {
-    return await this.service.create(policy);
+  async create(@Body() policy: PolicySaveDto): Promise<PolicyDto> {
+    return this.service.create(policy);
   }
 
   @Get()
-  async getAll(): Promise<Policy[]> {
-    return await this.service.getAllActivePolicies();
+  async getAll(): Promise<PolicyDto[]> {
+    return this.service.getAllActivePolicies();
   }
 
   @Get(':id')
-  async getById(@Param('id', ParseIntPipe) id: number): Promise<Policy | null> {
-    return await this.service.getActivePolicyById(id);
+  async getById(@Param('id', ParseIntPipe) id: number): Promise<PolicyDto> {
+    return this.service.getActivePolicyById(id);
   }
 
   @Delete(':id')

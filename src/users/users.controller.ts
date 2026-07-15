@@ -11,59 +11,75 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { User } from './user.entity';
 import { Role } from './enums/role.enum';
+import { UsersService } from './users.service';
+import { UserDto } from './dto/user.dto';
+import { UserSaveDto } from './dto/user.save-dto';
+import { UserUpdateDto } from './dto/user.update-dto';
+import { ApiOkResponse } from '@nestjs/swagger';
 
 // localhost:3000/users
 @Controller('users')
 export class UsersController {
+  constructor(private readonly service: UsersService) {}
+
   // CRUD - Create Read Update Delete
   @Post()
-  create(@Body() user: User): User {
-    console.log('Saved user:', user);
-    return user;
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOkResponse({
+    type: UserDto,
+  })
+  async create(@Body() saveDto: UserSaveDto): Promise<UserDto> {
+    return this.service.create(saveDto);
   }
 
   @Get()
-  getAll(): User[] {
-    const user1: User = new User();
-    user1.name = 'Vasya';
-    const user2: User = new User();
-    user2.name = 'Petya';
-    return [user1, user2];
+  @ApiOkResponse({
+    type: UserDto,
+    isArray: true,
+  })
+  async getAll(): Promise<UserDto[]> {
+    return this.service.getAllActiveUsers();
   }
 
   // GET 10.20.30.40:3000/users?id=7 -> '7'
   // GET 10.20.30.40:3000/users/7 - предпочтительный подход для id
   @Get(':id')
-  getById(@Param('id', ParseIntPipe) id: number): User {
-    console.log('Id:', id);
-    const user: User = new User();
-    user.name = 'Vasya';
-    return user;
+  @ApiOkResponse({
+    type: UserDto,
+  })
+  async getById(@Param('id', ParseIntPipe) id: number): Promise<UserDto> {
+    return this.service.getActiveUserById(id);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  update(@Param('id', ParseIntPipe) id: number, @Body() user: User): void {
-    console.log('Id:', id);
-    console.log('New name:', user.name);
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDto: UserUpdateDto,
+  ): Promise<void> {
+    await this.service.update(id, updateDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteById(@Param('id', ParseIntPipe) id: number): void {
-    console.log('Id:', id);
+  async deleteById(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.service.deleteById(id);
+  }
+
+  @Patch(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async restoreById(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.service.restoreById(id);
   }
 
   // PATCH 10.20.30.40:3000/users/5/set-role/ADMIN
   @Patch(':id/set-role/:role')
   @HttpCode(HttpStatus.NO_CONTENT)
-  setRole(
+  async setRole(
     @Param('id', ParseIntPipe) id: number,
     @Param('role', new ParseEnumPipe(Role)) role: Role,
-  ): void {
-    console.log('Id:', id);
-    console.log('Role:', role);
+  ): Promise<void> {
+    await this.service.setRole(id, role);
   }
 }
