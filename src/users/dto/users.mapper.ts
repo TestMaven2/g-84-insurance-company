@@ -6,6 +6,10 @@ import { UserSaveDto } from './user.save-dto';
 @Injectable()
 export class UsersMapper {
   mapEntityToDto(entity: User): UserDto {
+    if (!entity) {
+      return new UserDto();
+    }
+
     const dto: UserDto = new UserDto();
     dto.id = entity.id;
     dto.name = entity.name;
