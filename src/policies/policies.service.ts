@@ -7,6 +7,7 @@ import { PolicySaveDto } from './dto/policy.save-dto';
 import { PolicyDto } from './dto/policy.dto';
 import { UsersService } from '../users/users.service';
 import { PoliciesMapper } from './dto/policies.mapper';
+import { PoliciesValidator } from './validation/policies.validator';
 
 @Injectable()
 export class PoliciesService {
@@ -15,9 +16,11 @@ export class PoliciesService {
     private readonly carsService: CarsService,
     private readonly usersService: UsersService,
     private readonly mapper: PoliciesMapper,
+    private readonly validator: PoliciesValidator,
   ) {}
 
   async create(saveDto: PolicySaveDto): Promise<PolicyDto> {
+    this.validator.validateSaveDto(saveDto);
     const entity: Policy = this.mapper.mapDtoToEntity(saveDto);
     entity.holder = await this.usersService.getActiveEntityById(
       saveDto.holderId,

@@ -6,6 +6,7 @@ import { CarsMapper } from './dto/cars.mapper';
 import { CarSaveDto } from './dto/car.save-dto';
 import { CarDto } from './dto/car.dto';
 import { CarUpdateDto } from './dto/car.update-dto';
+import { CarsValidator } from './validation/cars.validator';
 
 @Injectable()
 export class CarsService {
@@ -13,9 +14,11 @@ export class CarsService {
     private readonly repository: CarsRepository,
     private readonly userService: UsersService,
     private readonly mapper: CarsMapper,
+    private readonly validator: CarsValidator,
   ) {}
 
   async create(saveDto: CarSaveDto): Promise<CarDto> {
+    this.validator.validateSaveDto(saveDto);
     const entity: Car = this.mapper.mapDtoToEntity(saveDto);
     entity.active = true;
     await this.repository.save(entity);
@@ -43,6 +46,7 @@ export class CarsService {
   }
 
   async update(id: number, updateDto: CarUpdateDto): Promise<void> {
+    this.validator.validateUpdateDto(updateDto);
     const foundCar: Car = await this.getActiveEntityById(id);
     foundCar.color = updateDto.newColor;
     await this.repository.save(foundCar);

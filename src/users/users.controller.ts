@@ -67,7 +67,7 @@ export class UsersController {
     await this.service.deleteById(id);
   }
 
-  @Patch(':id')
+  @Patch(':id/restore')
   @HttpCode(HttpStatus.NO_CONTENT)
   async restoreById(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.service.restoreById(id);
