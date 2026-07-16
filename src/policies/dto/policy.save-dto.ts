@@ -27,7 +27,7 @@ export class PolicySaveDto {
   @ApiProperty()
   @Validate(DatesValidator, {
     message:
-      'Issue date should not to be later than the current moment. Max insurance period is 5 years. Expiration date should not to be earlier than the issue date.',
+      'Issue date should not to be later than the current moment. Max insurance period is 3 years. Expiration date should not to be earlier than the issue date.',
   })
   @Type((): DateConstructor => Date)
   issuedAt: Date;
