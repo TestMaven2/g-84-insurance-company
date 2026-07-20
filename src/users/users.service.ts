@@ -7,6 +7,9 @@ import { UsersMapper } from './dto/users.mapper';
 import { UserSaveDto } from './dto/user.save-dto';
 import { UserUpdateDto } from './dto/user.update-dto';
 import { UsersValidator } from './validation/users.validator';
+import { EntitySaveException } from '../exceptions/types/entity-save.exception';
+import { EntityNotFoundException } from '../exceptions/types/entity-not-found.exception';
+import { EntityUpdateException } from '../exceptions/types/entity-update.exception';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +20,10 @@ export class UsersService {
   ) {}
 
   async create(saveDto: UserSaveDto): Promise<UserDto> {
+    if (await this.repository.isEmailExists(saveDto.email)) {
+      throw new EntitySaveException(User.name, 'email');
+    }
+
     this.validator.validateSaveDto(saveDto);
     const entity: User = this.mapper.mapDtoToEntity(saveDto);
     entity.role = Role.CUSTOMER;
@@ -27,6 +34,11 @@ export class UsersService {
 
   async getAllActiveUsers(): Promise<UserDto[]> {
     const users: User[] = await this.repository.findAllActive();
+
+    if (users.length === 0) {
+      throw new EntityNotFoundException(User.name);
+    }
+
     return this.mapper.mapEntityListToDtoList(users);
   }
 
@@ -39,7 +51,7 @@ export class UsersService {
     const user: User | null = await this.repository.findById(id);
 
     if (!user || !user.active) {
-      throw Error();
+      throw new EntityNotFoundException(User.name, id);
     }
 
     return user;
@@ -52,6 +64,8 @@ export class UsersService {
     if (foundUser) {
       foundUser.name = updateDto.newName;
       await this.repository.save(foundUser);
+    } else {
+      throw new EntityNotFoundException('User with this id not found');
     }
   }
 
@@ -64,7 +78,11 @@ export class UsersService {
   async restoreById(id: number): Promise<void> {
     const user: User | null = await this.repository.findById(id);
 
-    if (user && !user.active) {
+    if (!user) {
+      throw new EntityNotFoundException('User with this id not found');
+    }
+
+    if (!user.active) {
       user.active = true;
       await this.repository.save(user);
     }
@@ -72,6 +90,11 @@ export class UsersService {
 
   async setRole(id: number, role: Role): Promise<void> {
     const user: User = await this.getActiveEntityById(id);
+
+    if (user.role === role) {
+      throw new EntityUpdateException(`User id ${id} already has role ${role}`);
+    }
+
     user.role = role;
     await this.repository.save(user);
   }

@@ -7,6 +7,10 @@ import { CarSaveDto } from './dto/car.save-dto';
 import { CarDto } from './dto/car.dto';
 import { CarUpdateDto } from './dto/car.update-dto';
 import { CarsValidator } from './validation/cars.validator';
+import { EntitySaveException } from '../exceptions/types/entity-save.exception';
+import { EntityNotFoundException } from '../exceptions/types/entity-not-found.exception';
+import { EntityUpdateException } from '../exceptions/types/entity-update.exception';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class CarsService {
@@ -18,6 +22,10 @@ export class CarsService {
   ) {}
 
   async create(saveDto: CarSaveDto): Promise<CarDto> {
+    if (await this.repository.isVinExists(saveDto.vin)) {
+      throw new EntitySaveException(Car.name, 'vin');
+    }
+
     this.validator.validateSaveDto(saveDto);
     const entity: Car = this.mapper.mapDtoToEntity(saveDto);
     entity.active = true;
@@ -27,6 +35,11 @@ export class CarsService {
 
   async getAllActiveCars(): Promise<CarDto[]> {
     const cars: Car[] = await this.repository.findAllActive();
+
+    if (cars.length == 0) {
+      throw new EntityNotFoundException(Car.name);
+    }
+
     return this.mapper.mapEntityListToDtoList(cars);
   }
 
@@ -39,7 +52,7 @@ export class CarsService {
     const car: Car | null = await this.repository.findById(id);
 
     if (!car || !car.active) {
-      throw Error();
+      throw new EntityNotFoundException(Car.name, id);
     }
 
     return car;
@@ -48,8 +61,13 @@ export class CarsService {
   async update(id: number, updateDto: CarUpdateDto): Promise<void> {
     this.validator.validateUpdateDto(updateDto);
     const foundCar: Car = await this.getActiveEntityById(id);
-    foundCar.color = updateDto.newColor;
-    await this.repository.save(foundCar);
+
+    if (foundCar) {
+      foundCar.color = updateDto.newColor;
+      await this.repository.save(foundCar);
+    } else {
+      throw new EntityNotFoundException(Car.name, id);
+    }
   }
 
   async deleteById(id: number): Promise<void> {
@@ -61,7 +79,11 @@ export class CarsService {
   async restoreById(id: number): Promise<void> {
     const car: Car | null = await this.repository.findById(id);
 
-    if (car && !car.active) {
+    if (!car) {
+      throw new EntityNotFoundException(Car.name, id);
+    }
+
+    if (!car.active) {
       car.active = true;
       await this.repository.save(car);
     }
@@ -72,7 +94,15 @@ export class CarsService {
     ownerId: number,
   ): Promise<void> {
     const car: Car = await this.getActiveEntityById(carId);
-    car.owner = await this.userService.getActiveEntityById(ownerId);
+    const owner: User = await this.userService.getActiveEntityById(ownerId);
+
+    if (car.owner.id === owner.id) {
+      throw new EntityUpdateException(
+        `User id ${ownerId} is already owner of the car id ${carId}`,
+      );
+    }
+
+    car.owner = owner;
     await this.repository.save(car);
   }
 }
