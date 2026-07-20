@@ -8,6 +8,11 @@ import { PolicyDto } from './dto/policy.dto';
 import { UsersService } from '../users/users.service';
 import { PoliciesMapper } from './dto/policies.mapper';
 import { PoliciesValidator } from './validation/policies.validator';
+import { User } from '../users/user.entity';
+import { Role } from '../users/enums/role.enum';
+import { RoleMismatchException } from '../exceptions/types/role-mismatch.exception';
+import { EntityNotFoundException } from '../exceptions/types/entity-not-found.exception';
+import { EntityUpdateException } from '../exceptions/types/entity-update.exception';
 
 @Injectable()
 export class PoliciesService {
@@ -22,10 +27,20 @@ export class PoliciesService {
   async create(saveDto: PolicySaveDto): Promise<PolicyDto> {
     this.validator.validateSaveDto(saveDto);
     const entity: Policy = this.mapper.mapDtoToEntity(saveDto);
+
+    const agent: User = await this.usersService.getActiveEntityById(
+      saveDto.agentId,
+    );
+
+    if (agent.role !== Role.AGENT) {
+      throw new RoleMismatchException(saveDto.agentId, Role.AGENT);
+    }
+
+    entity.agent = agent;
     entity.holder = await this.usersService.getActiveEntityById(
       saveDto.holderId,
     );
-    entity.agent = await this.usersService.getActiveEntityById(saveDto.agentId);
+
     entity.active = true;
     await this.repository.save(entity);
     return this.mapper.mapEntityToDto(entity);
@@ -33,6 +48,11 @@ export class PoliciesService {
 
   async getAllActivePolicies(): Promise<PolicyDto[]> {
     const policies: Policy[] = await this.repository.findAllActive();
+
+    if (policies.length === 0) {
+      throw new EntityNotFoundException(Policy.name);
+    }
+
     policies.forEach((p: Policy): void => this.excludeInactiveCars(p));
     return this.mapper.mapEntityListToDtoList(policies);
   }
@@ -51,7 +71,7 @@ export class PoliciesService {
     const policy: Policy | null = await this.repository.findById(id);
 
     if (!policy || !policy.active) {
-      throw Error();
+      throw new EntityNotFoundException(Policy.name, id);
     }
 
     return policy;
@@ -66,7 +86,11 @@ export class PoliciesService {
   async restoreById(id: number): Promise<void> {
     const policy: Policy | null = await this.repository.findById(id);
 
-    if (policy && !policy.active) {
+    if (!policy) {
+      throw new EntityNotFoundException(Policy.name, id);
+    }
+
+    if (!policy.active) {
       policy.active = true;
       await this.repository.save(policy);
     }
@@ -78,6 +102,12 @@ export class PoliciesService {
   ): Promise<void> {
     const policy: Policy = await this.getActiveEntityById(policyId);
     const car: Car = await this.carsService.getActiveEntityById(carId);
+
+    if (policy.cars.some((x: Car): boolean => x.id === car.id)) {
+      throw new EntityUpdateException(
+        `Car id ${carId} is already present in the policy id ${policyId}`,
+      );
+    }
 
     policy.cars.push(car);
     await this.repository.save(policy);

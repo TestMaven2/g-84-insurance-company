@@ -35,4 +35,8 @@ export class CarsRepository {
   async deleteById(id: number): Promise<void> {
     await this.repository.delete(id);
   }
+
+  async isVinExists(vin: string): Promise<boolean> {
+    return this.repository.existsBy({ vin });
+  }
 }
