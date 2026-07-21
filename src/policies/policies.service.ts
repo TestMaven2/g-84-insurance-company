@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PoliciesRepository } from './policies.repository';
 import { Policy } from './policy.entity';
 import { Car } from '../cars/car.entity';
@@ -16,6 +16,8 @@ import { EntityUpdateException } from '../exceptions/types/entity-update.excepti
 
 @Injectable()
 export class PoliciesService {
+  private readonly logger: Logger = new Logger(PoliciesService.name);
+
   constructor(
     private readonly repository: PoliciesRepository,
     private readonly carsService: CarsService,
@@ -43,6 +45,11 @@ export class PoliciesService {
 
     entity.active = true;
     await this.repository.save(entity);
+
+    this.logger.log(
+      `Policy created: id ${entity.id}, agent id ${entity.agent.id}, holder id ${entity.holder.id}`,
+    );
+
     return this.mapper.mapEntityToDto(entity);
   }
 
@@ -81,6 +88,8 @@ export class PoliciesService {
     const policy: Policy = await this.getActiveEntityById(id);
     policy.active = false;
     await this.repository.save(policy);
+
+    this.logger.log(`Policy marked as inactive: id ${id}`);
   }
 
   async restoreById(id: number): Promise<void> {
@@ -93,6 +102,8 @@ export class PoliciesService {
     if (!policy.active) {
       policy.active = true;
       await this.repository.save(policy);
+
+      this.logger.log(`Policy marked as active: id ${id}`);
     }
   }
 
@@ -111,5 +122,7 @@ export class PoliciesService {
 
     policy.cars.push(car);
     await this.repository.save(policy);
+
+    this.logger.log(`Policy updated: id ${policyId}, added car id ${carId}`);
   }
 }
