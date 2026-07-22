@@ -6,7 +6,6 @@ import { UserDto } from './dto/user.dto';
 import { UsersMapper } from './dto/users.mapper';
 import { UserSaveDto } from './dto/user.save-dto';
 import { UserUpdateDto } from './dto/user.update-dto';
-import { UsersValidator } from './validation/users.validator';
 import { EntitySaveException } from '../exceptions/types/entity-save.exception';
 import { EntityNotFoundException } from '../exceptions/types/entity-not-found.exception';
 import { EntityUpdateException } from '../exceptions/types/entity-update.exception';
@@ -18,7 +17,7 @@ export class UsersService {
   constructor(
     private readonly repository: UsersRepository,
     private readonly mapper: UsersMapper,
-    private readonly validator: UsersValidator,
+    // private readonly validator: UsersValidator,
   ) {}
 
   async create(saveDto: UserSaveDto): Promise<UserDto> {
@@ -26,7 +25,7 @@ export class UsersService {
       throw new EntitySaveException(User.name, 'email');
     }
 
-    this.validator.validateSaveDto(saveDto);
+    // this.validator.validateSaveDto(saveDto);
     const entity: User = this.mapper.mapDtoToEntity(saveDto);
     entity.role = Role.CUSTOMER;
     entity.active = true;
@@ -63,7 +62,7 @@ export class UsersService {
   }
 
   async update(id: number, updateDto: UserUpdateDto): Promise<void> {
-    this.validator.validateUpdateDto(updateDto);
+    // this.validator.validateUpdateDto(updateDto);
     const foundUser: User | null = await this.repository.findById(id);
 
     if (foundUser) {
@@ -72,7 +71,7 @@ export class UsersService {
 
       this.logger.log(`User updated: id ${id}, new name ${foundUser.name}`);
     } else {
-      throw new EntityNotFoundException(User.name);
+      throw new EntityNotFoundException(User.name, id);
     }
   }
 
