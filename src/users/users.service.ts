@@ -9,6 +9,8 @@ import { UserUpdateDto } from './dto/user.update-dto';
 import { EntitySaveException } from '../exceptions/types/entity-save.exception';
 import { EntityNotFoundException } from '../exceptions/types/entity-not-found.exception';
 import { EntityUpdateException } from '../exceptions/types/entity-update.exception';
+import { UserIsNotConfirmedException } from '../exceptions/types/user-is-not-confirmed.exception';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -27,6 +29,7 @@ export class UsersService {
 
     // this.validator.validateSaveDto(saveDto);
     const entity: User = this.mapper.mapDtoToEntity(saveDto);
+    entity.password = await bcrypt.hash(entity.password, 10);
     entity.role = Role.CUSTOMER;
     entity.active = true;
     await this.repository.save(entity);
@@ -109,5 +112,19 @@ export class UsersService {
     await this.repository.save(user);
 
     this.logger.log(`User updated: ${id}, new role ${role}`);
+  }
+
+  async getConfirmedByEmail(email: string): Promise<User> {
+    const user: User | null = await this.repository.findByEmail(email);
+
+    if (!user) {
+      throw new EntityNotFoundException(User.name, undefined, email);
+    }
+
+    if (!user.active) {
+      throw new UserIsNotConfirmedException(email);
+    }
+
+    return user;
   }
 }
