@@ -29,4 +29,8 @@ export class UsersRepository {
   async isEmailExists(email: string): Promise<boolean> {
     return this.repository.existsBy({ email });
   }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.repository.findOneBy({ email });
+  }
 }
