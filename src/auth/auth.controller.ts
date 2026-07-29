@@ -64,4 +64,17 @@ export class AuthController {
       });
     }
   }
+
+  @Public()
+  @Post('/logout')
+  @HttpCode(HttpStatus.OK)
+  logout(
+    @Req() request: express.Request,
+    @Res({ passthrough: true }) response: express.Response,
+  ): void {
+    this.service.revokeRefreshToken(request.headers.cookie);
+
+    response.clearCookie('access-token');
+    response.clearCookie('refresh-token');
+  }
 }

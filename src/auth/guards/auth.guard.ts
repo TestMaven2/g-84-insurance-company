@@ -5,14 +5,16 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthService } from '../auth.service';
 import { IS_PUBLIC_KEY } from '../types/auth.decorators';
+import { TokensService } from '../tokens.service';
+import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly authService: AuthService,
+    private readonly tokensService: TokensService,
+    private readonly usersService: UsersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -26,30 +28,18 @@ export class AuthGuard implements CanActivate {
     }
 
     const request: any = context.switchToHttp().getRequest();
-    const authHeader: string = request.headers['authorization'];
+    const accessToken: string | null = this.tokensService.getTokenFromCookies(
+      request.headers.cookie,
+      'access-token',
+    );
 
-    if (!authHeader) {
+    if (!accessToken) {
       throw new UnauthorizedException('Unauthorized');
     }
 
-    if (!authHeader.startsWith('Basic ')) {
-      throw new UnauthorizedException('Invalid auth header');
-    }
-
-    const encodedCredentials: string = authHeader.split(' ')[1];
-
-    // user@test.com:qwerty123
-    const credentials: string = Buffer.from(
-      encodedCredentials,
-      'base64',
-    ).toString('utf-8');
-
-    const [username, password]: string[] = credentials.split(':');
-
-    request.user = await this.authService.getAuthenticatedUser(
-      username,
-      password,
-    );
+    const email: string =
+      this.tokensService.validateAccessTokenAndGetEmail(accessToken);
+    request.user = await this.usersService.getConfirmedByEmail(email);
 
     return true;
   }

@@ -45,4 +45,21 @@ export class TokensService {
   validateRefreshTokenAndGetEmail(refreshToken: string): string {
     return this.validateTokenAndGetEmail(refreshToken, this.refreshSecret);
   }
+
+  getTokenFromCookies(
+    cookies: string | undefined,
+    tokenTitle: string,
+  ): string | null {
+    if (cookies === undefined) {
+      return null;
+    }
+
+    const cookiesList: string[] = cookies.split('; ');
+    for (const cookie of cookiesList) {
+      if (cookie.startsWith(`${tokenTitle}=`)) {
+        return cookie.split('=', 2)[1];
+      }
+    }
+    return null;
+  }
 }
