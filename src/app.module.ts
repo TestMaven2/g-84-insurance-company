@@ -8,6 +8,8 @@ import { AuthGuard } from './auth/guards/auth.guard';
 import { AuthModule } from './auth/auth.module';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { ConfigModule } from '@nestjs/config';
+import { ConfirmationCodesModule } from './confirmation-codes/confirmation-codes.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { ConfigModule } from '@nestjs/config';
     CarsModule,
     PoliciesModule,
     AuthModule,
+    ConfirmationCodesModule,
+    EmailModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',

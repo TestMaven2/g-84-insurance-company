@@ -17,7 +17,7 @@ import { UserDto } from './dto/user.dto';
 import { UserSaveDto } from './dto/user.save-dto';
 import { UserUpdateDto } from './dto/user.update-dto';
 import { ApiOkResponse } from '@nestjs/swagger';
-import { Roles } from '../auth/types/auth.decorators';
+import { Public, Roles } from '../auth/types/auth.decorators';
 
 // localhost:3000/users
 @Controller('users')
@@ -89,5 +89,13 @@ export class UsersController {
     @Param('role', new ParseEnumPipe(Role)) role: Role,
   ): Promise<void> {
     await this.service.setRole(id, role);
+  }
+
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.OK)
+  async register(@Body() registrationDto: UserSaveDto): Promise<string> {
+    await this.service.register(registrationDto);
+    return 'Registration complete. Check your email.';
   }
 }
