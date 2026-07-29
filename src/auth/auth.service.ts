@@ -59,8 +59,10 @@ export class AuthService {
       );
     }
 
-    const refreshToken: string | null =
-      this.getRefreshTokenFromCookies(cookies);
+    const refreshToken: string | null = this.tokensService.getTokenFromCookies(
+      cookies,
+      'refresh-token',
+    );
 
     if (!refreshToken) {
       throw new UnauthorizedException(
@@ -82,13 +84,27 @@ export class AuthService {
     return this.tokensService.generateAccessToken(user);
   }
 
-  private getRefreshTokenFromCookies(cookies: string): string | null {
-    const cookiesList: string[] = cookies.split('; ');
-    for (const cookie of cookiesList) {
-      if (cookie.startsWith('refresh-token=')) {
-        return cookie.split('=', 2)[1];
-      }
+  revokeRefreshToken(cookies: string | undefined): void {
+    if (cookies === undefined) {
+      return;
     }
-    return null;
+
+    const refreshToken: string | null = this.tokensService.getTokenFromCookies(
+      cookies,
+      'refresh-token',
+    );
+
+    if (!refreshToken) {
+      return;
+    }
+
+    let email: string;
+    try {
+      email = this.tokensService.validateRefreshTokenAndGetEmail(refreshToken);
+    } catch {
+      return;
+    }
+
+    this.refreshStorage.delete(email);
   }
 }
