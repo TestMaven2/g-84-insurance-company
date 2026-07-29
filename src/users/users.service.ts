@@ -11,6 +11,8 @@ import { EntityNotFoundException } from '../exceptions/types/entity-not-found.ex
 import { EntityUpdateException } from '../exceptions/types/entity-update.exception';
 import { UserIsNotConfirmedException } from '../exceptions/types/user-is-not-confirmed.exception';
 import * as bcrypt from 'bcrypt';
+import { RegistrationException } from '../exceptions/types/registration.exception';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class UsersService {
@@ -20,6 +22,7 @@ export class UsersService {
     private readonly repository: UsersRepository,
     private readonly mapper: UsersMapper,
     // private readonly validator: UsersValidator,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(saveDto: UserSaveDto): Promise<UserDto> {
@@ -126,5 +129,26 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async register(registrationDto: UserSaveDto): Promise<void> {
+    const email: string = registrationDto.email;
+    let user: User | null = await this.repository.findByEmail(email);
+
+    if (!user) {
+      user = new User();
+      user.email = email;
+      user.role = Role.CUSTOMER;
+      user.active = false;
+    } else if (user.active) {
+      throw new RegistrationException(`Email ${email} already in use`);
+    }
+
+    user.password = await bcrypt.hash(registrationDto.password, 10);
+    user.name = registrationDto.name;
+
+    await this.repository.save(user);
+
+    await this.emailService.sendConfirmationEmail(user);
   }
 }
