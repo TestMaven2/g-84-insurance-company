@@ -3,6 +3,7 @@ import { ConfirmationCodesRepository } from './confirmation-codes.repository';
 import { User } from '../users/user.entity';
 import { randomUUID } from 'node:crypto';
 import { ConfirmationCode } from './confirmation-code.entity';
+import { RegistrationException } from '../exceptions/types/registration.exception';
 
 @Injectable()
 export class ConfirmationCodesService {
@@ -21,5 +22,19 @@ export class ConfirmationCodesService {
     await this.repository.save(codeEntity);
 
     return codeValue;
+  }
+
+  async validateCodeAndGetUser(codeValue: string): Promise<User> {
+    const codeEntity: ConfirmationCode | null =
+      await this.repository.findByValue(codeValue);
+
+    if (!codeEntity || codeEntity.expiration < new Date()) {
+      throw new RegistrationException(
+        'Your confirmation code is invalid. Try to register again.',
+      );
+    }
+
+    await this.repository.delete(codeEntity);
+    return codeEntity.user;
   }
 }

@@ -98,4 +98,13 @@ export class UsersController {
     await this.service.register(registrationDto);
     return 'Registration complete. Check your email.';
   }
+
+  @Public()
+  @Get('confirm/:codeValue')
+  async confirmRegistration(
+    @Param('codeValue') codeValue: string,
+  ): Promise<string> {
+    await this.service.confirmRegistration(codeValue);
+    return 'Registration confirmed';
+  }
 }

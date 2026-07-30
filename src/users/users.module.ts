@@ -7,10 +7,15 @@ import { UsersRepository } from './users.repository';
 import { UsersMapper } from './dto/users.mapper';
 import { UsersValidator } from './validation/users.validator';
 import { EmailModule } from '../email/email.module';
+import { ConfirmationCodesModule } from '../confirmation-codes/confirmation-codes.module';
 
 @Module({
   controllers: [UsersController],
-  imports: [TypeOrmModule.forFeature([User]), EmailModule],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    EmailModule,
+    ConfirmationCodesModule,
+  ],
   providers: [UsersService, UsersRepository, UsersMapper, UsersValidator],
   exports: [UsersService, UsersMapper],
 })
