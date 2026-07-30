@@ -13,6 +13,7 @@ import { UserIsNotConfirmedException } from '../exceptions/types/user-is-not-con
 import * as bcrypt from 'bcrypt';
 import { RegistrationException } from '../exceptions/types/registration.exception';
 import { EmailService } from '../email/email.service';
+import { ConfirmationCodesService } from '../confirmation-codes/confirmation-codes.service';
 
 @Injectable()
 export class UsersService {
@@ -23,6 +24,7 @@ export class UsersService {
     private readonly mapper: UsersMapper,
     // private readonly validator: UsersValidator,
     private readonly emailService: EmailService,
+    private readonly confirmationCodesService: ConfirmationCodesService,
   ) {}
 
   async create(saveDto: UserSaveDto): Promise<UserDto> {
@@ -150,5 +152,13 @@ export class UsersService {
     await this.repository.save(user);
 
     await this.emailService.sendConfirmationEmail(user);
+  }
+
+  async confirmRegistration(codeValue: string): Promise<void> {
+    const user: User =
+      await this.confirmationCodesService.validateCodeAndGetUser(codeValue);
+
+    user.active = true;
+    await this.repository.save(user);
   }
 }
