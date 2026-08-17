@@ -10,6 +10,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
 import { ConfigModule } from '@nestjs/config';
 import { ConfirmationCodesModule } from './confirmation-codes/confirmation-codes.module';
 import { EmailModule } from './email/email.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { EmailModule } from './email/email.module';
     AuthModule,
     ConfirmationCodesModule,
     EmailModule,
+    AiModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
