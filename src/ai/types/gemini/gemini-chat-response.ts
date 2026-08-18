@@ -1,5 +1,5 @@
 import { GeminiCandidate } from './gemini-candidate';
 
-export class GeminiResponse {
+export class GeminiChatResponse {
   candidates: GeminiCandidate[];
 }

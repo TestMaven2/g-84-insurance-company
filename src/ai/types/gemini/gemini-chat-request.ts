@@ -1,5 +1,5 @@
 import { GeminiContent } from './gemini-content';
 
-export class GeminiRequest {
+export class GeminiChatRequest {
   contents: GeminiContent[];
 }
