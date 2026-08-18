@@ -1,4 +1,4 @@
 export class OpenAiRequest {
   model: string;
-  input: string;
+  input: string | string[];
 }

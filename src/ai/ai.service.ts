@@ -59,4 +59,16 @@ export class AiService {
   //
   //   return this.client.generateContent(request);
   // }
+
+  // async generateEmbeddings(texts: string[]): Promise<number[][]> {
+  //   const model: string = this.configService.getOrThrow(
+  //     'OPENAI_EMBEDDING_MODEL',
+  //   );
+  //
+  //   const request: OpenAiRequest = new OpenAiRequest();
+  //   request.model = model;
+  //   request.input = texts;
+  //
+  //   return this.client.generateEmbeddings(request);
+  // }
 }
