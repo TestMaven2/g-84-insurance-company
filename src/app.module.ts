@@ -12,6 +12,7 @@ import { ConfirmationCodesModule } from './confirmation-codes/confirmation-codes
 import { EmailModule } from './email/email.module';
 import { AiModule } from './ai/ai.module';
 import { EmbeddingsModule } from './embeddings/embeddings.module';
+import { VectorStorageModule } from './vector-storage/vector-storage.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { EmbeddingsModule } from './embeddings/embeddings.module';
     EmailModule,
     AiModule,
     EmbeddingsModule,
+    VectorStorageModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
