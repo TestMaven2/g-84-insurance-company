@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { SaveToDbRequestDto } from './dto/save-to-db-request.dto';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { QdrantPoint } from './qdrant/types/qdrant-point';
 import { randomUUID } from 'node:crypto';
@@ -12,18 +11,15 @@ export class VectorStorageService {
     private readonly client: QdrantClient,
   ) {}
 
-  async saveToDb(saveDto: SaveToDbRequestDto): Promise<void> {
-    const texts: string[] = saveDto.payloads.map((p: object): string =>
+  async saveToDb(payloads: object[]): Promise<void> {
+    const texts: string[] = payloads.map((p: object): string =>
       JSON.stringify(p),
     );
 
     const embeddings: number[][] =
       await this.embeddingsService.generateEmbeddings(texts);
 
-    const points: QdrantPoint[] = this.generatePoints(
-      embeddings,
-      saveDto.payloads,
-    );
+    const points: QdrantPoint[] = this.generatePoints(embeddings, payloads);
 
     await this.client.save(points);
   }
