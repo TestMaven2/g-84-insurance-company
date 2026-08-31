@@ -16,7 +16,8 @@ export class IngestionService {
   async ingest(file: Express.Multer.File): Promise<void> {
     const text: string = this.txtExtractor.extract(file.buffer);
     const cleanedText: string = this.cleanService.cleanText(text);
-    const chunks: string[] = this.chunkingService.getChunks(cleanedText);
+    const chunks: string[] =
+      this.chunkingService.chunkBySizeWithOverlap(cleanedText);
     const payloads: object[] = this.mapChunksToPayloads(chunks);
     await this.vectorStorageService.saveToDb(payloads);
   }
