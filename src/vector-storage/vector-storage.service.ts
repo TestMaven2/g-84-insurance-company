@@ -3,6 +3,7 @@ import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { QdrantPoint } from './qdrant/types/qdrant-point';
 import { randomUUID } from 'node:crypto';
 import { QdrantClient } from './qdrant/qdrant-client';
+import { QdrantResult } from './qdrant/types/qdrant-result';
 
 @Injectable()
 export class VectorStorageService {
@@ -39,5 +40,12 @@ export class VectorStorageService {
     }
 
     return result;
+  }
+
+  async getRelevantChunks(embedding: number[]): Promise<string[]> {
+    const relevantChunks: QdrantResult[] =
+      await this.client.getRelevantChunks(embedding);
+
+    return relevantChunks.map((c: QdrantResult): string => c.payload.text);
   }
 }

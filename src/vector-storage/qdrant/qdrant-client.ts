@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { QdrantPoint } from './types/qdrant-point';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
+import { QdrantResponse } from './types/qdrant-response';
+import { QdrantResult } from './types/qdrant-result';
 
 @Injectable()
 export class QdrantClient {
@@ -30,5 +32,19 @@ export class QdrantClient {
     await axios.put(`${this.baseUrl}/points`, {
       points: points,
     });
+  }
+
+  async getRelevantChunks(embedding: number[]): Promise<QdrantResult[]> {
+    const response: QdrantResponse = await axios.post(
+      `${this.baseUrl}/points/search`,
+      {
+        vector: embedding,
+        limit: 5,
+        with_payload: true,
+        with_vector: false,
+      },
+    );
+
+    return response.data.result;
   }
 }
