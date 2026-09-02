@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PDFParse, TextResult } from 'pdf-parse';
+import { PageTextResult, PDFParse, TextResult } from 'pdf-parse';
 
 @Injectable()
 export class PdfExtractor {
-  async extract(content: Buffer): Promise<string> {
+  async extract(content: Buffer): Promise<PageTextResult[]> {
     const parser: PDFParse = new PDFParse({ data: content });
     const result: TextResult = await parser.getText();
     await parser.destroy();
-    return result.text;
+    return result.pages;
   }
 }
