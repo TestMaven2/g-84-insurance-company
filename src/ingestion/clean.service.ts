@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CleanService {
-  cleanText(text: string): string {
+  cleanTexts(texts: string[]): string[] {
+    return texts.map((t: string): string => this.cleanText(t));
+  }
+
+  private cleanText(text: string): string {
     text = this.normalizeLineEndings(text);
     text = this.collapseSpaces(text);
     text = this.removeCompanyName(text);

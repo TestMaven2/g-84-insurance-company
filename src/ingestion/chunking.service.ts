@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ConfigurationException } from '../exceptions/types/configuration.exception';
+import { Chunk } from './types/chunk';
 
 @Injectable()
 export class ChunkingService {
@@ -31,7 +32,30 @@ export class ChunkingService {
     return result;
   }
 
-  chunkBySizeWithOverlap(text: string): string[] {
+  chunkBySizeWithOverlap(texts: string[], fileName: string): Chunk[] {
+    const chunks: Chunk[] = [];
+
+    for (let i: number = 0; i < texts.length; i++) {
+      const currentText: string = texts[i];
+
+      if (currentText && currentText.trim() !== '') {
+        const textParts: string[] =
+          this.chunkOneTextBySizeWithOverlap(currentText);
+
+        for (let j: number = 0; j < textParts.length; j++) {
+          const chunk: Chunk = new Chunk();
+          chunk.docTitle = fileName;
+          chunk.page = i + 1;
+          chunk.text = textParts[j];
+          chunks.push(chunk);
+        }
+      }
+    }
+
+    return chunks;
+  }
+
+  private chunkOneTextBySizeWithOverlap(text: string): string[] {
     const chunkSize: number = this.getChunkSize();
     const overlap: number = this.getOverlap(chunkSize);
 

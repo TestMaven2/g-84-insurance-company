@@ -4,6 +4,7 @@ import { QdrantPoint } from './qdrant/types/qdrant-point';
 import { randomUUID } from 'node:crypto';
 import { QdrantClient } from './qdrant/qdrant-client';
 import { QdrantResult } from './qdrant/types/qdrant-result';
+import { Chunk } from '../ingestion/types/chunk';
 
 @Injectable()
 export class VectorStorageService {
@@ -12,10 +13,8 @@ export class VectorStorageService {
     private readonly client: QdrantClient,
   ) {}
 
-  async saveToDb(payloads: object[]): Promise<void> {
-    const texts: string[] = payloads.map((p: object): string =>
-      JSON.stringify(p),
-    );
+  async saveToDb(payloads: Chunk[]): Promise<void> {
+    const texts: string[] = payloads.map((p: Chunk): string => p.text);
 
     const embeddings: number[][] =
       await this.embeddingsService.generateEmbeddings(texts);
