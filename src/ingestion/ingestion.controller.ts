@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Post,
   UploadedFile,
@@ -7,6 +8,7 @@ import {
 import { Public } from '../auth/types/auth.decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { IngestionService } from './ingestion.service';
+import { IngestDocumentDto } from './dto/ingest-document.dto';
 
 @Controller('ingestion')
 export class IngestionController {
@@ -15,7 +17,10 @@ export class IngestionController {
   @Public()
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async upload(@UploadedFile() file: Express.Multer.File): Promise<void> {
-    await this.service.ingest(file);
+  async upload(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() ingestDocumentDto: IngestDocumentDto,
+  ): Promise<void> {
+    await this.service.ingest(file, ingestDocumentDto);
   }
 }

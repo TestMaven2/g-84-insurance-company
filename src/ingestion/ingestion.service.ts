@@ -4,6 +4,7 @@ import { ChunkingService } from './chunking.service';
 import { VectorStorageService } from '../vector-storage/vector-storage.service';
 import { MultiformatExtractor } from './extractors/multiformat.extractor';
 import { Chunk } from './types/chunk';
+import { IngestDocumentDto } from './dto/ingest-document.dto';
 
 @Injectable()
 export class IngestionService {
@@ -14,12 +15,16 @@ export class IngestionService {
     private readonly vectorStorageService: VectorStorageService,
   ) {}
 
-  async ingest(file: Express.Multer.File): Promise<void> {
+  async ingest(
+    file: Express.Multer.File,
+    ingestDocumentDto: IngestDocumentDto,
+  ): Promise<void> {
     const pages: string[] = await this.multiformatExtractor.extract(file);
     const cleanedPages: string[] = this.cleanService.cleanTexts(pages);
     const chunks: Chunk[] = this.chunkingService.chunkBySizeWithOverlap(
       cleanedPages,
       file.originalname,
+      ingestDocumentDto,
     );
     await this.vectorStorageService.saveToDb(chunks);
   }

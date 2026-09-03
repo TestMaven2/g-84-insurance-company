@@ -41,9 +41,14 @@ export class VectorStorageService {
     return result;
   }
 
-  async getRelevantChunks(embedding: number[]): Promise<string[]> {
-    const relevantChunks: QdrantResult[] =
-      await this.client.getRelevantChunks(embedding);
+  async getRelevantChunks(
+    embedding: number[],
+    insuranceType: string,
+  ): Promise<string[]> {
+    const relevantChunks: QdrantResult[] = await this.client.getRelevantChunks(
+      embedding,
+      insuranceType,
+    );
 
     return relevantChunks.map((c: QdrantResult): string => c.payload.text);
   }
