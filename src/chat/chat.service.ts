@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { VectorStorageService } from '../vector-storage/vector-storage.service';
 import { AiService } from '../ai/ai.service';
+import { PromptService } from './prompt.service';
 
 @Injectable()
 export class ChatService {
@@ -9,6 +10,7 @@ export class ChatService {
     private readonly embeddingsService: EmbeddingsService,
     private readonly vectorStorageService: VectorStorageService,
     private readonly aiService: AiService,
+    private readonly promptService: PromptService,
   ) {}
 
   async generateResponse(request: string): Promise<string> {
@@ -16,33 +18,30 @@ export class ChatService {
       await this.embeddingsService.generateEmbeddings([request])
     )[0];
 
+    let prompt: string =
+      this.promptService.createPromptForInsuranceType(request);
+
+    const insuranceType: string = await this.aiService.generateResponse(prompt);
+
     const relevantChunks: string[] =
-      await this.vectorStorageService.getRelevantChunks(embedding);
+      await this.vectorStorageService.getRelevantChunks(
+        embedding,
+        insuranceType,
+      );
 
     console.log('Question:');
     console.log(request + '\n');
     console.log('Relevant chunks:' + '\n');
     relevantChunks.forEach((c: string): void => console.log(c + '\n'));
 
-    const prompt: string = this.createPrompt(relevantChunks, request);
+    prompt = this.promptService.createPromptForUserRequest(
+      relevantChunks,
+      request,
+    );
 
     console.log('\nCreated prompt:\n');
     console.log(prompt + '\n');
 
     return this.aiService.generateResponse(prompt);
-  }
-
-  private createPrompt(chunks: string[], request: string): string {
-    return `Сгенерируй ответ, основываясь только на предоставленном контексте.
-Дай только ответ, не упоминай в ответе контекст.
-
-Контекст:
-
-${chunks.join('\n\n')}
-
-Конец контекста.
-
-Вопрос:
-${request}`;
   }
 }
