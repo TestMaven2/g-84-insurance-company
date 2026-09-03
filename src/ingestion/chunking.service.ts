@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ConfigurationException } from '../exceptions/types/configuration.exception';
 import { Chunk } from './types/chunk';
+import { IngestDocumentDto } from './dto/ingest-document.dto';
 
 @Injectable()
 export class ChunkingService {
@@ -32,7 +33,11 @@ export class ChunkingService {
     return result;
   }
 
-  chunkBySizeWithOverlap(texts: string[], fileName: string): Chunk[] {
+  chunkBySizeWithOverlap(
+    texts: string[],
+    fileName: string,
+    ingestDocumentDto: IngestDocumentDto,
+  ): Chunk[] {
     const chunks: Chunk[] = [];
 
     for (let i: number = 0; i < texts.length; i++) {
@@ -43,16 +48,30 @@ export class ChunkingService {
           this.chunkOneTextBySizeWithOverlap(currentText);
 
         for (let j: number = 0; j < textParts.length; j++) {
-          const chunk: Chunk = new Chunk();
-          chunk.docTitle = fileName;
-          chunk.page = i + 1;
-          chunk.text = textParts[j];
-          chunks.push(chunk);
+          chunks.push(
+            this.fillChunk(fileName, i + 1, textParts[j], ingestDocumentDto),
+          );
         }
       }
     }
 
     return chunks;
+  }
+
+  private fillChunk(
+    fileName: string,
+    pageNumber: number,
+    text: string,
+    ingestDocumentDto: IngestDocumentDto,
+  ): Chunk {
+    const chunk: Chunk = new Chunk();
+    chunk.docTitle = fileName;
+    chunk.page = pageNumber;
+    chunk.text = text;
+    chunk.insuranceType = ingestDocumentDto.insuranceType;
+    chunk.departments = ingestDocumentDto.departments;
+    chunk.language = ingestDocumentDto.language;
+    return chunk;
   }
 
   private chunkOneTextBySizeWithOverlap(text: string): string[] {
