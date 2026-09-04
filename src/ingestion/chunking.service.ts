@@ -71,6 +71,7 @@ export class ChunkingService {
     chunk.insuranceType = ingestDocumentDto.insuranceType;
     chunk.departments = ingestDocumentDto.departments;
     chunk.language = ingestDocumentDto.language;
+    chunk.publicAccess = ingestDocumentDto.publicAccess;
     return chunk;
   }
 
