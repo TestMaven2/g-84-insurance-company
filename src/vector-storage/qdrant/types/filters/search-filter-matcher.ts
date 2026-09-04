@@ -1,3 +1,3 @@
 export class SearchFilterMatcher {
-  value: string;
+  value: string | boolean;
 }

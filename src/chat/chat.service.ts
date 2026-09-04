@@ -3,6 +3,7 @@ import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { VectorStorageService } from '../vector-storage/vector-storage.service';
 import { AiService } from '../ai/ai.service';
 import { PromptService } from './prompt.service';
+import { Role } from '../users/enums/role.enum';
 
 @Injectable()
 export class ChatService {
@@ -13,7 +14,7 @@ export class ChatService {
     private readonly promptService: PromptService,
   ) {}
 
-  async generateResponse(request: string): Promise<string> {
+  async generateResponse(request: string, userRole: Role): Promise<string> {
     const embedding: number[] = (
       await this.embeddingsService.generateEmbeddings([request])
     )[0];
@@ -27,6 +28,7 @@ export class ChatService {
       await this.vectorStorageService.getRelevantChunks(
         embedding,
         insuranceType,
+        userRole,
       );
 
     console.log('Question:');

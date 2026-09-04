@@ -1,5 +1,5 @@
 import { SearchFilterParameter } from './search-filter-parameter';
 
-export class SearchFilter {
+export class SearchFilterOr {
   should: SearchFilterParameter[];
 }

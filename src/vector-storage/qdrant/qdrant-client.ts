@@ -4,9 +4,10 @@ import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { QdrantResponse } from './types/qdrant-response';
 import { QdrantResult } from './types/qdrant-result';
-import { SearchFilter } from './types/filters/search-filter';
+import { SearchFilterOr } from './types/filters/search-filter-or';
 import { SearchFilterMatcher } from './types/filters/search-filter-matcher';
 import { SearchFilterParameter } from './types/filters/search-filter-parameter';
+import { SearchFilterAnd } from './types/filters/search-filter-and';
 
 @Injectable()
 export class QdrantClient {
@@ -40,6 +41,7 @@ export class QdrantClient {
   async getRelevantChunks(
     embedding: number[],
     insuranceType: string,
+    onlyPublicDocs: boolean,
   ): Promise<QdrantResult[]> {
     const response: QdrantResponse = await axios.post(
       `${this.baseUrl}/points/search`,
@@ -48,15 +50,30 @@ export class QdrantClient {
         limit: 5,
         with_payload: true,
         with_vector: false,
-        filter: this.createSearchFilter(insuranceType),
+        filter: this.createSearchFilter(insuranceType, onlyPublicDocs),
       },
     );
 
     return response.data.result;
   }
 
-  private createSearchFilter(insuranceType: string): SearchFilter {
-    const filter: SearchFilter = new SearchFilter();
+  private createSearchFilter(
+    insuranceType: string,
+    onlyPublicDocs: boolean,
+  ): SearchFilterAnd {
+    const filter: SearchFilterAnd = new SearchFilterAnd();
+
+    if (onlyPublicDocs) {
+      const publicMatcher: SearchFilterMatcher = new SearchFilterMatcher();
+      publicMatcher.value = true;
+
+      const publicParameter: SearchFilterParameter =
+        new SearchFilterParameter();
+      publicParameter.key = 'publicAccess';
+      publicParameter.match = publicMatcher;
+
+      filter.must.push(publicParameter);
+    }
 
     if (insuranceType === 'both') {
       return filter;
@@ -72,7 +89,10 @@ export class QdrantClient {
     const parameter2: SearchFilterParameter = new SearchFilterParameter();
     parameter2.match = matcher2;
 
-    filter.should = [parameter1, parameter2];
+    const filterOr: SearchFilterOr = new SearchFilterOr();
+    filterOr.should = [parameter1, parameter2];
+
+    filter.must.push(filterOr);
 
     return filter;
   }

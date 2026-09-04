@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { QdrantClient } from './qdrant/qdrant-client';
 import { QdrantResult } from './qdrant/types/qdrant-result';
 import { Chunk } from '../ingestion/types/chunk';
+import { Role } from '../users/enums/role.enum';
 
 @Injectable()
 export class VectorStorageService {
@@ -44,10 +45,14 @@ export class VectorStorageService {
   async getRelevantChunks(
     embedding: number[],
     insuranceType: string,
+    userRole: Role,
   ): Promise<string[]> {
+    const onlyPublicDocs: boolean = userRole === Role.CUSTOMER;
+
     const relevantChunks: QdrantResult[] = await this.client.getRelevantChunks(
       embedding,
       insuranceType,
+      onlyPublicDocs,
     );
 
     return relevantChunks.map((c: QdrantResult): string => c.payload.text);

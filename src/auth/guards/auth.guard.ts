@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../types/auth.decorators';
 import { TokensService } from '../tokens.service';
 import { UsersService } from '../../users/users.service';
+import { AuthenticatedRequest } from '../types/authenticated-request';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -27,7 +28,10 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
-    const request: any = context.switchToHttp().getRequest();
+    const request: AuthenticatedRequest = context
+      .switchToHttp()
+      .getRequest<AuthenticatedRequest>();
+
     const accessToken: string | null = this.tokensService.getTokenFromCookies(
       request.headers.cookie,
       'access-token',
