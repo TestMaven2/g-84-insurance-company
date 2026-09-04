@@ -5,4 +5,5 @@ export class Chunk {
   insuranceType: string;
   departments: string[];
   language: string;
+  publicAccess: boolean;
 }
