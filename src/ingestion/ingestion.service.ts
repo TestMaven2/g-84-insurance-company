@@ -26,6 +26,10 @@ export class IngestionService {
       file.originalname,
       ingestDocumentDto,
     );
-    await this.vectorStorageService.saveToDb(chunks);
+    await this.vectorStorageService.saveToDb(
+      chunks,
+      ingestDocumentDto.documentId,
+      ingestDocumentDto.documentVersion,
+    );
   }
 }

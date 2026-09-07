@@ -1,5 +1,5 @@
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsBoolean } from 'class-validator';
+import { IsBoolean, IsInt, Min } from 'class-validator';
 
 export class IngestDocumentDto {
   insuranceType: string;
@@ -24,4 +24,11 @@ export class IngestDocumentDto {
   })
   @IsBoolean()
   publicAccess: boolean;
+
+  @Transform(({ value }: TransformFnParams): number => Number(value))
+  @IsInt()
+  @Min(1)
+  documentVersion: number;
+
+  documentId: string;
 }

@@ -1,17 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import { QdrantPoint } from './types/qdrant-point';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { QdrantPoint } from './types/search/qdrant-point';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { QdrantResponse } from './types/qdrant-response';
-import { QdrantResult } from './types/qdrant-result';
+import { QdrantResponse } from './types/search/qdrant-response';
+import { QdrantResult } from './types/search/qdrant-result';
 import { SearchFilterOr } from './types/filters/search-filter-or';
 import { SearchFilterMatcher } from './types/filters/search-filter-matcher';
 import { SearchFilterParameter } from './types/filters/search-filter-parameter';
 import { SearchFilterAnd } from './types/filters/search-filter-and';
+import { QdrantScrollResponse } from './types/scroll/qdrant-scroll-response';
 
 @Injectable()
-export class QdrantClient {
+export class QdrantClient implements OnModuleInit {
   private readonly baseUrl: string;
+  private readonly archiveUrl: string;
 
   constructor(private readonly configService: ConfigService) {
     const dbUrl: string = this.configService.getOrThrow('QDRANT_URL');
@@ -19,21 +21,32 @@ export class QdrantClient {
       'KNOWLEDGE_DB_COLLECTION_NAME',
     );
     this.baseUrl = `${dbUrl}/collections/${collectionName}`;
+
+    const archiveCollectionName: string = this.configService.getOrThrow(
+      'ARCHIVE_DB_COLLECTION_NAME',
+    );
+    this.archiveUrl = `${dbUrl}/collections/${archiveCollectionName}`;
   }
 
-  async save(points: QdrantPoint[]): Promise<void> {
-    try {
-      await axios.put(this.baseUrl, {
-        vectors: {
-          size: 1536,
-          distance: 'Cosine',
-        },
-      });
-    } catch {
-      // Collection already exists
+  async onModuleInit(): Promise<void> {
+    for (const url of [this.baseUrl, this.archiveUrl]) {
+      try {
+        await axios.put(url, {
+          vectors: {
+            size: 1536,
+            distance: 'Cosine',
+          },
+        });
+      } catch {
+        // Collection already exists
+      }
     }
+  }
 
-    await axios.put(`${this.baseUrl}/points`, {
+  async save(points: QdrantPoint[], toArchive?: boolean): Promise<void> {
+    const url: string = toArchive ? this.archiveUrl : this.baseUrl;
+
+    await axios.put(`${url}/points`, {
       points: points,
     });
   }
@@ -95,5 +108,47 @@ export class QdrantClient {
     filter.must.push(filterOr);
 
     return filter;
+  }
+
+  async findPointsByDocumentId(documentId: string): Promise<QdrantPoint[]> {
+    const points: QdrantPoint[] = [];
+    let offset: string | null = null;
+
+    do {
+      const response: QdrantScrollResponse = await axios.post(
+        `${this.baseUrl}/points/scroll`,
+        {
+          with_payload: true,
+          with_vector: true,
+          filter: this.createScrollFilter(documentId),
+          offset: offset,
+        },
+      );
+
+      points.push(...response.data.result.points);
+      offset = response.data.result.next_page_offset;
+    } while (offset !== null);
+
+    return points;
+  }
+
+  private createScrollFilter(documentId: string): SearchFilterAnd {
+    const matcher: SearchFilterMatcher = new SearchFilterMatcher();
+    matcher.value = documentId;
+
+    const parameter: SearchFilterParameter = new SearchFilterParameter();
+    parameter.key = 'documentId';
+    parameter.match = matcher;
+
+    const filter: SearchFilterAnd = new SearchFilterAnd();
+    filter.must = [parameter];
+
+    return filter;
+  }
+
+  async deletePointsByDocumentId(documentId: string): Promise<void> {
+    const filter: SearchFilterAnd = this.createScrollFilter(documentId);
+
+    await axios.post(`${this.baseUrl}/points/delete`, { filter: filter });
   }
 }
