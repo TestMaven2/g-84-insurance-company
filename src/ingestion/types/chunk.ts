@@ -6,4 +6,6 @@ export class Chunk {
   departments: string[];
   language: string;
   publicAccess: boolean;
+  documentVersion: number;
+  documentId: string;
 }

@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
-import { QdrantPoint } from './qdrant/types/qdrant-point';
+import { QdrantPoint } from './qdrant/types/search/qdrant-point';
 import { randomUUID } from 'node:crypto';
 import { QdrantClient } from './qdrant/qdrant-client';
-import { QdrantResult } from './qdrant/types/qdrant-result';
+import { QdrantResult } from './qdrant/types/search/qdrant-result';
 import { Chunk } from '../ingestion/types/chunk';
 import { Role } from '../users/enums/role.enum';
+import { DocumentVersionConflictException } from '../exceptions/types/document-version-conflict.exception';
 
 @Injectable()
 export class VectorStorageService {
@@ -14,7 +15,11 @@ export class VectorStorageService {
     private readonly client: QdrantClient,
   ) {}
 
-  async saveToDb(payloads: Chunk[]): Promise<void> {
+  async saveToDb(
+    payloads: Chunk[],
+    documentId: string,
+    documentVersion: number,
+  ): Promise<void> {
     const texts: string[] = payloads.map((p: Chunk): string => p.text);
 
     const embeddings: number[][] =
@@ -22,12 +27,35 @@ export class VectorStorageService {
 
     const points: QdrantPoint[] = this.generatePoints(embeddings, payloads);
 
+    await this.archiveOldDocumentVersion(documentId, documentVersion);
+
     await this.client.save(points);
+  }
+
+  private async archiveOldDocumentVersion(
+    documentId: string,
+    documentVersion: number,
+  ): Promise<void> {
+    const points: QdrantPoint[] =
+      await this.client.findPointsByDocumentId(documentId);
+
+    if (points.length === 0) {
+      return;
+    }
+
+    const oldVersion: number = points[0].payload.documentVersion;
+
+    if (documentVersion <= oldVersion) {
+      throw new DocumentVersionConflictException(oldVersion, documentVersion);
+    }
+
+    await this.client.save(points, true);
+    await this.client.deletePointsByDocumentId(documentId);
   }
 
   private generatePoints(
     embeddings: number[][],
-    payloads: object[],
+    payloads: Chunk[],
   ): QdrantPoint[] {
     const result: QdrantPoint[] = [];
 
