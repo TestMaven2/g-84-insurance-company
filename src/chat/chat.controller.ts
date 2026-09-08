@@ -20,9 +20,6 @@ export class ChatController {
     @Body() chatRequestDto: AiChatRequestDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<string> {
-    return this.service.generateResponse(
-      chatRequestDto.message,
-      request.user.role,
-    );
+    return this.service.generateResponse(chatRequestDto.message, request.user);
   }
 }
