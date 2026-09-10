@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { VectorStorageService } from './vector-storage.service';
-import { QdrantClient as CustomQdrantClient } from './qdrant/qdrant-client';
+import { QdrantFilterBuilder } from './qdrant/qdrant-filter.builder';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { ConfigService } from '@nestjs/config';
 import { QdrantClient as OfficialQdrantClient } from '@qdrant/js-client-rest';
@@ -9,7 +9,7 @@ import { QdrantVectorStore } from '@langchain/qdrant';
 @Module({
   providers: [
     VectorStorageService,
-    CustomQdrantClient,
+    QdrantFilterBuilder,
     {
       provide: OpenAIEmbeddings,
       useFactory: (configService: ConfigService) => {
@@ -44,6 +44,6 @@ import { QdrantVectorStore } from '@langchain/qdrant';
       inject: [OfficialQdrantClient, OpenAIEmbeddings, ConfigService],
     },
   ],
-  exports: [VectorStorageService, QdrantVectorStore, CustomQdrantClient],
+  exports: [VectorStorageService, QdrantVectorStore, QdrantFilterBuilder],
 })
 export class VectorStorageModule {}

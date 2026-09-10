@@ -5,7 +5,7 @@ import { ChatMessage } from './types/chat-message';
 import { User } from '../users/user.entity';
 import { ContextService } from './context.service';
 import { QdrantVectorStore } from '@langchain/qdrant';
-import { QdrantClient } from '../vector-storage/qdrant/qdrant-client';
+import { QdrantFilterBuilder } from '../vector-storage/qdrant/qdrant-filter.builder';
 import { SearchFilterAnd } from '../vector-storage/qdrant/types/filters/search-filter-and';
 import { Role } from '../users/enums/role.enum';
 import { DocumentInterface } from '@langchain/core/documents';
@@ -22,7 +22,7 @@ export class ChatService {
     private readonly promptService: PromptService,
     private readonly contextService: ContextService,
     private readonly vectorStore: QdrantVectorStore,
-    private readonly qdrantClient: QdrantClient,
+    private readonly filterBuilder: QdrantFilterBuilder,
   ) {}
 
   async generateResponse(request: string, user: User): Promise<string> {
@@ -37,7 +37,7 @@ export class ChatService {
 
     const insuranceType: string = await this.aiService.generateResponse(prompt);
 
-    const filter: SearchFilterAnd = this.qdrantClient.createSearchFilter(
+    const filter: SearchFilterAnd = this.filterBuilder.buildSearchFilter(
       insuranceType,
       user.role === Role.CUSTOMER,
     );
