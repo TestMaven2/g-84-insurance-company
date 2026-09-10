@@ -5,6 +5,8 @@ import { OpenAIEmbeddings } from '@langchain/openai';
 import { ConfigService } from '@nestjs/config';
 import { QdrantClient as OfficialQdrantClient } from '@qdrant/js-client-rest';
 import { QdrantVectorStore } from '@langchain/qdrant';
+// Вариант для Gemini
+// import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 
 @Module({
   providers: [
@@ -20,6 +22,17 @@ import { QdrantVectorStore } from '@langchain/qdrant';
       },
       inject: [ConfigService],
     },
+    // Вариант для Gemini
+    // {
+    //   provide: GoogleGenerativeAIEmbeddings,
+    //   useFactory: (configService: ConfigService) => {
+    //     return new GoogleGenerativeAIEmbeddings({
+    //       apiKey: configService.getOrThrow('GOOGLE_API_KEY'),
+    //       model: configService.getOrThrow('GOOGLE_EMBEDDING_MODEL'),
+    //     });
+    //   },
+    //   inject: [ConfigService],
+    // },
     {
       provide: OfficialQdrantClient,
       useFactory: (configService: ConfigService): OfficialQdrantClient => {
@@ -43,6 +56,25 @@ import { QdrantVectorStore } from '@langchain/qdrant';
       },
       inject: [OfficialQdrantClient, OpenAIEmbeddings, ConfigService],
     },
+    // Вариант для Gemini
+    // {
+    //   provide: QdrantVectorStore,
+    //   useFactory: (
+    //     client: OfficialQdrantClient,
+    //     embeddings: GoogleGenerativeAIEmbeddings,
+    //     config: ConfigService,
+    //   ) => {
+    //     return new QdrantVectorStore(embeddings, {
+    //       client,
+    //       collectionName: config.getOrThrow('KNOWLEDGE_DB_COLLECTION_NAME'),
+    //     });
+    //   },
+    //   inject: [
+    //     OfficialQdrantClient,
+    //     GoogleGenerativeAIEmbeddings,
+    //     ConfigService,
+    //   ],
+    // },
   ],
   exports: [VectorStorageService, QdrantVectorStore, QdrantFilterBuilder],
 })
