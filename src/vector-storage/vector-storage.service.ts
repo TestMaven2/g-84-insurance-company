@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { QdrantPoint } from './qdrant/types/search/qdrant-point';
-import { randomUUID } from 'node:crypto';
 import { QdrantClient } from './qdrant/qdrant-client';
 import { QdrantResult } from './qdrant/types/search/qdrant-result';
 import { Chunk } from '../ingestion/types/chunk';
 import { Role } from '../users/enums/role.enum';
 import { DocumentVersionConflictException } from '../exceptions/types/document-version-conflict.exception';
+import { Document } from 'langchain';
+import { QdrantVectorStore } from '@langchain/qdrant';
 
 @Injectable()
 export class VectorStorageService {
   constructor(
-    private readonly embeddingsService: EmbeddingsService,
     private readonly client: QdrantClient,
+    private readonly vectorStore: QdrantVectorStore,
   ) {}
 
   async saveToDb(
@@ -20,16 +20,21 @@ export class VectorStorageService {
     documentId: string,
     documentVersion: number,
   ): Promise<void> {
-    const texts: string[] = payloads.map((p: Chunk): string => p.text);
-
-    const embeddings: number[][] =
-      await this.embeddingsService.generateEmbeddings(texts);
-
-    const points: QdrantPoint[] = this.generatePoints(embeddings, payloads);
-
     await this.archiveOldDocumentVersion(documentId, documentVersion);
 
-    await this.client.save(points);
+    const documents: Document[] = this.convertChunksToDocuments(payloads);
+    await this.vectorStore.addDocuments(documents);
+  }
+
+  private convertChunksToDocuments(chunks: Chunk[]): Document[] {
+    return chunks.map((chunk: Chunk): Document => {
+      const { text, ...metadata }: Chunk = chunk;
+
+      return new Document({
+        pageContent: text,
+        metadata,
+      });
+    });
   }
 
   private async archiveOldDocumentVersion(
@@ -51,23 +56,6 @@ export class VectorStorageService {
 
     await this.client.save(points, true);
     await this.client.deletePointsByDocumentId(documentId);
-  }
-
-  private generatePoints(
-    embeddings: number[][],
-    payloads: Chunk[],
-  ): QdrantPoint[] {
-    const result: QdrantPoint[] = [];
-
-    for (let i: number = 0; i < embeddings.length; i++) {
-      const point: QdrantPoint = new QdrantPoint();
-      point.id = randomUUID();
-      point.vector = embeddings[i];
-      point.payload = payloads[i];
-      result.push(point);
-    }
-
-    return result;
   }
 
   async getRelevantChunks(

@@ -21,6 +21,9 @@
     "test:integration": "jest --config ./test/jest-integration.json"
   },
   "dependencies": {
+    "@langchain/google-genai": "^2.3.1",
+    "@langchain/openai": "^1.5.12",
+    "@langchain/qdrant": "^1.0.3",
     "@nestjs-modules/mailer": "^2.3.7",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
@@ -33,6 +36,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "jsonwebtoken": "^9.0.3",
+    "langchain": "^1.5.11",
     "mammoth": "^1.12.2",
     "multer": "^2.2.0",
     "nest-winston": "^1.10.2",
