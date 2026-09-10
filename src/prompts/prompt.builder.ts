@@ -1,5 +1,5 @@
 import { Role } from '../users/enums/role.enum';
-import { ChatMessage } from './types/chat-message';
+import { ChatMessage } from '../chat/types/chat-message';
 
 export class PromptBuilder {
   private prompt: string;
@@ -52,6 +52,17 @@ ${this.mapChatHistoryToMultistring(chatHistory)}
     
 Вопрос пользователя:
 ${request}`;
+    return this;
+  }
+
+  withDocument(documentText: string): PromptBuilder {
+    this.prompt = `${this.prompt}
+    
+Анализируемый документ:
+
+${documentText}
+
+Конец анализируемого документа.`;
     return this;
   }
 

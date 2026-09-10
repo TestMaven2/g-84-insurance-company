@@ -15,6 +15,7 @@ import { EmbeddingsModule } from './embeddings/embeddings.module';
 import { VectorStorageModule } from './vector-storage/vector-storage.module';
 import { IngestionModule } from './ingestion/ingestion.module';
 import { ChatModule } from './chat/chat.module';
+import { PromptsModule } from './prompts/prompts.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ChatModule } from './chat/chat.module';
     VectorStorageModule,
     IngestionModule,
     ChatModule,
+    PromptsModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',

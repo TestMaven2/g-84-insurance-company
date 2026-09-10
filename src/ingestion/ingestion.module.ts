@@ -8,6 +8,10 @@ import { VectorStorageModule } from '../vector-storage/vector-storage.module';
 import { DocxExtractor } from './extractors/docx.extractor';
 import { PdfExtractor } from './extractors/pdf.extractor';
 import { MultiformatExtractor } from './extractors/multiformat.extractor';
+import { PromptsModule } from '../prompts/prompts.module';
+import { AiModule } from '../ai/ai.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { QuarantineDocument } from './quarantine-document.entity';
 
 @Module({
   controllers: [IngestionController],
@@ -20,6 +24,11 @@ import { MultiformatExtractor } from './extractors/multiformat.extractor';
     CleanService,
     ChunkingService,
   ],
-  imports: [VectorStorageModule],
+  imports: [
+    VectorStorageModule,
+    PromptsModule,
+    AiModule,
+    TypeOrmModule.forFeature([QuarantineDocument]),
+  ],
 })
 export class IngestionModule {}

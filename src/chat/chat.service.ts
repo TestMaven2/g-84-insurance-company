@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { VectorStorageService } from '../vector-storage/vector-storage.service';
 import { AiService } from '../ai/ai.service';
-import { PromptService } from './prompt.service';
+import { PromptService } from '../prompts/prompt.service';
 import { ChatMessage } from './types/chat-message';
 import { User } from '../users/user.entity';
 import { QdrantResult } from '../vector-storage/qdrant/types/search/qdrant-result';
