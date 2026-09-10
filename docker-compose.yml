@@ -1,0 +1,39 @@
+services:
+  app:
+    build: .
+    container_name: insurance-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      QDRANT_URL: http://qdrant:6333
+    depends_on:
+      - postgres
+      - qdrant
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: insurance-postgres
+    environment:
+      POSTGRES_DB: insurance_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sql77777
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: insurance-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  postgres_data:
+  qdrant_data:
