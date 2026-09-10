@@ -11,7 +11,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ConfirmationCodesModule } from './confirmation-codes/confirmation-codes.module';
 import { EmailModule } from './email/email.module';
 import { AiModule } from './ai/ai.module';
-import { EmbeddingsModule } from './embeddings/embeddings.module';
 import { VectorStorageModule } from './vector-storage/vector-storage.module';
 import { IngestionModule } from './ingestion/ingestion.module';
 import { ChatModule } from './chat/chat.module';
@@ -26,7 +25,6 @@ import { PromptsModule } from './prompts/prompts.module';
     ConfirmationCodesModule,
     EmailModule,
     AiModule,
-    EmbeddingsModule,
     VectorStorageModule,
     IngestionModule,
     ChatModule,

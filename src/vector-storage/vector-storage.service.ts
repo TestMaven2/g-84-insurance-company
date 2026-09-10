@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { QdrantPoint } from './qdrant/types/search/qdrant-point';
 import { QdrantClient } from './qdrant/qdrant-client';
-import { QdrantResult } from './qdrant/types/search/qdrant-result';
 import { Chunk } from '../ingestion/types/chunk';
-import { Role } from '../users/enums/role.enum';
 import { DocumentVersionConflictException } from '../exceptions/types/document-version-conflict.exception';
 import { Document } from 'langchain';
 import { QdrantVectorStore } from '@langchain/qdrant';
@@ -56,19 +54,5 @@ export class VectorStorageService {
 
     await this.client.save(points, true);
     await this.client.deletePointsByDocumentId(documentId);
-  }
-
-  async getRelevantChunks(
-    embedding: number[],
-    insuranceType: string,
-    userRole: Role,
-  ): Promise<QdrantResult[]> {
-    const onlyPublicDocs: boolean = userRole === Role.CUSTOMER;
-
-    return this.client.getRelevantChunks(
-      embedding,
-      insuranceType,
-      onlyPublicDocs,
-    );
   }
 }

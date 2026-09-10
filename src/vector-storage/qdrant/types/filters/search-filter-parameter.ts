@@ -1,6 +1,6 @@
 import { SearchFilterMatcher } from './search-filter-matcher';
 
 export class SearchFilterParameter {
-  key: string = 'insuranceType';
+  key: string = 'metadata.insuranceType';
   match: SearchFilterMatcher;
 }

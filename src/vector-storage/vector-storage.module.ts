@@ -44,6 +44,6 @@ import { QdrantVectorStore } from '@langchain/qdrant';
       inject: [OfficialQdrantClient, OpenAIEmbeddings, ConfigService],
     },
   ],
-  exports: [VectorStorageService],
+  exports: [VectorStorageService, QdrantVectorStore, CustomQdrantClient],
 })
 export class VectorStorageModule {}

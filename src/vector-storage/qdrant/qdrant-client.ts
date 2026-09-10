@@ -2,8 +2,6 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { QdrantPoint } from './types/search/qdrant-point';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { QdrantResponse } from './types/search/qdrant-response';
-import { QdrantResult } from './types/search/qdrant-result';
 import { SearchFilterOr } from './types/filters/search-filter-or';
 import { SearchFilterMatcher } from './types/filters/search-filter-matcher';
 import { SearchFilterParameter } from './types/filters/search-filter-parameter';
@@ -51,26 +49,7 @@ export class QdrantClient implements OnModuleInit {
     });
   }
 
-  async getRelevantChunks(
-    embedding: number[],
-    insuranceType: string,
-    onlyPublicDocs: boolean,
-  ): Promise<QdrantResult[]> {
-    const response: QdrantResponse = await axios.post(
-      `${this.baseUrl}/points/search`,
-      {
-        vector: embedding,
-        limit: 5,
-        with_payload: true,
-        with_vector: false,
-        filter: this.createSearchFilter(insuranceType, onlyPublicDocs),
-      },
-    );
-
-    return response.data.result;
-  }
-
-  private createSearchFilter(
+  createSearchFilter(
     insuranceType: string,
     onlyPublicDocs: boolean,
   ): SearchFilterAnd {
@@ -82,7 +61,7 @@ export class QdrantClient implements OnModuleInit {
 
       const publicParameter: SearchFilterParameter =
         new SearchFilterParameter();
-      publicParameter.key = 'publicAccess';
+      publicParameter.key = 'metadata.publicAccess';
       publicParameter.match = publicMatcher;
 
       filter.must.push(publicParameter);
@@ -132,12 +111,12 @@ export class QdrantClient implements OnModuleInit {
     return points;
   }
 
-  private createScrollFilter(documentId: string): SearchFilterAnd {
+  createScrollFilter(documentId: string): SearchFilterAnd {
     const matcher: SearchFilterMatcher = new SearchFilterMatcher();
     matcher.value = documentId;
 
     const parameter: SearchFilterParameter = new SearchFilterParameter();
-    parameter.key = 'documentId';
+    parameter.key = 'metadata.documentId';
     parameter.match = matcher;
 
     const filter: SearchFilterAnd = new SearchFilterAnd();

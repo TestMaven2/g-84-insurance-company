@@ -2,14 +2,37 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { QdrantResult } from '../vector-storage/qdrant/types/search/qdrant-result';
 import { QdrantPayload } from '../vector-storage/qdrant/types/search/qdrant-payload';
+import { DocumentInterface } from '@langchain/core/documents';
 
 @Injectable()
 export class ContextService {
   constructor(private readonly configService: ConfigService) {}
 
-  generateContext(chunks: QdrantResult[]): string[] {
+  private convertDocumentToQdrantResult(
+    document: DocumentInterface,
+    score: number,
+  ): QdrantResult {
+    const payload: QdrantPayload = new QdrantPayload();
+    payload.text = document.pageContent;
+    payload.documentId = document.metadata['documentId'] as string;
+    payload.index = document.metadata['index'] as number;
+
+    const result: QdrantResult = new QdrantResult();
+    result.id = document.id as string;
+    result.version = document.metadata['documentVersion'] as number;
+    result.score = score;
+    result.payload = payload;
+
+    return result;
+  }
+
+  generateContext(chunks: [DocumentInterface, number][]): string[] {
     const chunksByDocId: Map<string, QdrantResult[]> =
-      this.groupChunksByDocumentId(chunks);
+      this.groupChunksByDocumentId(
+        chunks.map((c: [DocumentInterface, number]): QdrantResult =>
+          this.convertDocumentToQdrantResult(c[0], c[1]),
+        ),
+      );
 
     this.sortChunksByIndex(chunksByDocId);
 

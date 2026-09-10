@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { EmbeddingsService } from '../embeddings/embeddings.service';
-import { VectorStorageService } from '../vector-storage/vector-storage.service';
 import { AiService } from '../ai/ai.service';
 import { PromptService } from '../prompts/prompt.service';
 import { ChatMessage } from './types/chat-message';
 import { User } from '../users/user.entity';
-import { QdrantResult } from '../vector-storage/qdrant/types/search/qdrant-result';
 import { ContextService } from './context.service';
+import { QdrantVectorStore } from '@langchain/qdrant';
+import { QdrantClient } from '../vector-storage/qdrant/qdrant-client';
+import { SearchFilterAnd } from '../vector-storage/qdrant/types/filters/search-filter-and';
+import { Role } from '../users/enums/role.enum';
+import { DocumentInterface } from '@langchain/core/documents';
 
 @Injectable()
 export class ChatService {
@@ -16,18 +18,14 @@ export class ChatService {
   >();
 
   constructor(
-    private readonly embeddingsService: EmbeddingsService,
-    private readonly vectorStorageService: VectorStorageService,
     private readonly aiService: AiService,
     private readonly promptService: PromptService,
     private readonly contextService: ContextService,
+    private readonly vectorStore: QdrantVectorStore,
+    private readonly qdrantClient: QdrantClient,
   ) {}
 
   async generateResponse(request: string, user: User): Promise<string> {
-    const embedding: number[] = (
-      await this.embeddingsService.generateEmbeddings([request])
-    )[0];
-
     const chatHistory: ChatMessage[] = this.getChatHistoryByUserId(user.id);
 
     let prompt: string = this.promptService
@@ -37,17 +35,15 @@ export class ChatService {
       .withQuestion(request)
       .build();
 
-    console.log('\nCreated prompt for insurance type:\n');
-    console.log(prompt + '\n');
-
     const insuranceType: string = await this.aiService.generateResponse(prompt);
 
-    const relevantChunks: QdrantResult[] =
-      await this.vectorStorageService.getRelevantChunks(
-        embedding,
-        insuranceType,
-        user.role,
-      );
+    const filter: SearchFilterAnd = this.qdrantClient.createSearchFilter(
+      insuranceType,
+      user.role === Role.CUSTOMER,
+    );
+
+    const relevantChunks: [DocumentInterface, number][] =
+      await this.vectorStore.similaritySearchWithScore(request, 5, filter);
 
     const context: string[] =
       this.contextService.generateContext(relevantChunks);
@@ -59,9 +55,6 @@ export class ChatService {
       .withChatHistory(chatHistory)
       .withQuestion(request)
       .build();
-
-    console.log('\nCreated prompt for AI chat:\n');
-    console.log(prompt + '\n');
 
     const aiResponse: string = await this.aiService.generateResponse(prompt);
 
