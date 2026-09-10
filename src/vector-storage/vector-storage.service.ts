@@ -74,15 +74,13 @@ export class VectorStorageService {
     embedding: number[],
     insuranceType: string,
     userRole: Role,
-  ): Promise<string[]> {
+  ): Promise<QdrantResult[]> {
     const onlyPublicDocs: boolean = userRole === Role.CUSTOMER;
 
-    const relevantChunks: QdrantResult[] = await this.client.getRelevantChunks(
+    return this.client.getRelevantChunks(
       embedding,
       insuranceType,
       onlyPublicDocs,
     );
-
-    return relevantChunks.map((c: QdrantResult): string => c.payload.text);
   }
 }
