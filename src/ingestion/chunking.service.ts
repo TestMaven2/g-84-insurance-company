@@ -39,6 +39,7 @@ export class ChunkingService {
     ingestDocumentDto: IngestDocumentDto,
   ): Chunk[] {
     const chunks: Chunk[] = [];
+    let chunkIndex: number = 0;
 
     for (let i: number = 0; i < texts.length; i++) {
       const currentText: string = texts[i];
@@ -49,9 +50,16 @@ export class ChunkingService {
 
         for (let j: number = 0; j < textParts.length; j++) {
           chunks.push(
-            this.fillChunk(fileName, i + 1, textParts[j], ingestDocumentDto),
+            this.fillChunk(
+              fileName,
+              i + 1,
+              textParts[j],
+              ingestDocumentDto,
+              chunkIndex++,
+            ),
           );
         }
+        chunkIndex++;
       }
     }
 
@@ -63,6 +71,7 @@ export class ChunkingService {
     pageNumber: number,
     text: string,
     ingestDocumentDto: IngestDocumentDto,
+    chunkIndex: number,
   ): Chunk {
     const chunk: Chunk = new Chunk();
     chunk.docTitle = fileName;
@@ -74,6 +83,7 @@ export class ChunkingService {
     chunk.publicAccess = ingestDocumentDto.publicAccess;
     chunk.documentVersion = ingestDocumentDto.documentVersion;
     chunk.documentId = ingestDocumentDto.documentId;
+    chunk.index = chunkIndex;
     return chunk;
   }
 

@@ -8,4 +8,5 @@ export class Chunk {
   publicAccess: boolean;
   documentVersion: number;
   documentId: string;
+  index: number;
 }
